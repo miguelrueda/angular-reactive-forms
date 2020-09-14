@@ -1,6 +1,6 @@
 import { OnInit, Component } from '@angular/core';
 import { Customer } from './customer';
-import { FormGroup, FormControl, FormBuilder, Validators, AbstractControl, ValidatorFn } from '@angular/forms';
+import { FormGroup, FormControl, FormBuilder, Validators, AbstractControl, ValidatorFn, FormArray } from '@angular/forms';
 import { debounceTime } from "rxjs/operators";
 
 function emailMatcher(c: AbstractControl): {[key: string]: boolean} | null {
@@ -36,6 +36,10 @@ export class CustomerComponent implements OnInit {
   customer = new Customer();
   emailMessage: string;
 
+  get addresses(): FormArray {
+    return this.customerForm.get('addresses') as FormArray;
+  }
+
   private validationMessages = {
     required: 'Please enter your email address',
     email: 'Please enter a valid email address'
@@ -56,13 +60,29 @@ export class CustomerComponent implements OnInit {
       sendCatalog: true,
       phone: '',
       rating: [null, ratingRange(1, 5)],
-      notification: 'email'
+      notification: 'email',
+      addresses: this.fb.array([this.buildAddress()])
     });
     this.customerForm.get('notification').valueChanges.subscribe(value => this.setNotification(value));
     const emailControl = this.customerForm.get('emailGroup.email');
     emailControl.valueChanges.pipe(
       debounceTime(1000)
     ).subscribe(value => this.setMessage(emailControl));
+  }
+
+  private buildAddress(): FormGroup {
+    return this.fb.group({
+      addressType: 'home',
+      street1: '',
+      street2: '',
+      city: '',
+      state: '',
+      zipCode: ''
+    });
+  }
+
+  public addAddress(): void {
+    this.addresses.push(this.buildAddress());
   }
 
   private setMessage(c: AbstractControl): void {
